@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: agileboard
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./schema:/docker-entrypoint-initdb.d/1-schema
+      - ./seeds:/docker-entrypoint-initdb.d/2-seeds
+      - ./docker-init.sh:/docker-entrypoint-initdb.d/0-init.sh
+      - pgdata:/var/lib/postgresql/data
+volumes:
+  pgdata:
