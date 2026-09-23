@@ -12,7 +12,7 @@ PostgreSQL schema and seed data for the AgileBoard sprint performance dashboard.
 | Table | Purpose |
 |---|---|
 | `projects`, `teams`, `team_members`, `users` | Who is doing the work: project **Fibi** (teams Nexo, Vertex) and project **AI** (team Nexus) |
-| `releases`, `sprints` | Releases per project (Fibi R2.3/R2.4, AI R1.1/R1.2); sprints S37–S42 per team |
+| `releases`, `sprints` | Releases per project (Fibi R2.3/R2.4, AI R1.1). Nexo and Vertex have completed sprints S37–S42; Nexus has one active sprint, S1 (9–23 Sep 2026) |
 | `issues` | Stories, tasks, bugs, spikes, with start/complete times and compliance flags (DoR, DoD, acceptance criteria, code review, tests, automation) |
 | `sprint_issues` | An issue's participation in a sprint: `committed` vs `added` (unplanned), and `completed` / `spillover` outcome |
 | `issue_status_history` | Every status change, used for cycle time and WIP at sprint end |

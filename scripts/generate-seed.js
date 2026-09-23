@@ -38,7 +38,7 @@ const atWorkHour = (d) => new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(),
 // ---------- reference data ----------
 const projects = [
   { id: uuid(), key: 'FIBI', name: 'Fibi', description: 'Fibi delivery programme', releases: [['R2.3', '2026-08-14'], ['R2.4', '2026-09-25']] },
-  { id: uuid(), key: 'AI', name: 'AI', description: 'AI programme', releases: [['R1.1', '2026-08-14'], ['R1.2', '2026-09-25']] },
+  { id: uuid(), key: 'AI', name: 'AI', description: 'AI programme', releases: [['R1.1', '2026-10-30']] },
 ];
 const projectByKey = Object.fromEntries(projects.map((p) => [p.key, p]));
 const issueCounters = Object.fromEntries(projects.map((p) => [p.key, 100]));
@@ -46,7 +46,8 @@ const issueCounters = Object.fromEntries(projects.map((p) => [p.key, 100]));
 const teamDefs = [
   { project: 'FIBI', name: 'Nexo',   capacity: 47, unplanned: 0.09, completion: 0.91 },
   { project: 'FIBI', name: 'Vertex', capacity: 38, unplanned: 0.05, completion: 0.94 },
-  { project: 'AI',   name: 'Nexus',  capacity: 55, unplanned: 0.12, completion: 0.86 },
+  // Nexus is new: a single sprint that is still active and ends today
+  { project: 'AI',   name: 'Nexus',  capacity: 55, unplanned: 0.12, completion: 0.86, sprintNames: ['S1'], lastStart: '2026-09-09', activeLast: true },
 ];
 
 const firstNames = ['Alex', 'Sam', 'Jordan', 'Taylor', 'Morgan', 'Casey', 'Riley', 'Jamie', 'Avery', 'Quinn', 'Drew', 'Parker', 'Reese', 'Skyler', 'Rowan'];
@@ -68,9 +69,12 @@ const releases = projects.flatMap((p) =>
 );
 const releasesFor = (projectKey) => releases.filter((r) => r.projectKey === projectKey);
 
-// S42 is the latest sprint and has just finished (Mon 7 Sep – Mon 21 Sep 2026).
+// Default history: S37–S42, where S42 has just finished (Mon 7 Sep – Mon 21 Sep 2026).
+// A team can override this with its own sprintNames / lastStart / activeLast.
 const sprintNames = ['S37', 'S38', 'S39', 'S40', 'S41', 'S42'];
 const lastStart = new Date('2026-09-07T00:00:00Z');
+// "Now" for an active sprint: nothing in it happens after this moment.
+const asOf = new Date('2026-09-23T09:00:00Z');
 
 const titles = {
   story: ['Account overview page', 'Payment confirmation flow', 'Search by reference', 'Export statement to PDF', 'Notification preferences',
@@ -144,16 +148,21 @@ function progress(issue, from, finishBy, complete) {
 
 for (const team of teams) {
   let carryOver = [];
-  sprintNames.forEach((name, si) => {
-    const start = addDays(lastStart, -14 * (sprintNames.length - 1 - si));
+  const names = team.sprintNames || sprintNames;
+  const teamLastStart = team.lastStart ? new Date(`${team.lastStart}T00:00:00Z`) : lastStart;
+  names.forEach((name, si) => {
+    const start = addDays(teamLastStart, -14 * (names.length - 1 - si));
     const days = workingDays(start);
     const end = days[days.length - 1];
-    const endOfSprint = new Date(end.getTime() + 18 * 3600000);
+    const isActive = Boolean(team.activeLast) && si === names.length - 1;
+    // Work in an active sprint can only have happened up to "now"
+    const endOfSprint = isActive ? asOf : new Date(end.getTime() + 18 * 3600000);
     const sprint = {
       id: uuid(), team: team.id, name,
       release: releasesFor(team.project.key)[si < 3 ? 0 : 1].id,
       goal: `${team.name} ${name}: ${pick(['stabilise payments', 'ship onboarding', 'reporting improvements', 'performance hardening', 'release readiness'])}`,
       start: days[0], end,
+      status: isActive ? 'active' : 'completed',
     };
     sprints.push(sprint);
 
@@ -188,19 +197,20 @@ for (const team of teams) {
       const from = si2.commitment === 'added' ? si2.addedAt : atWorkHour(days[intBetween(0, 7)]);
       const finishBy = endOfSprint;
       progress(si2.issue, from, finishBy, done);
-      si2.outcome = done ? 'completed' : 'spillover';
+      // In an active sprint unfinished work has no outcome yet (it has not spilled over)
+      si2.outcome = done ? 'completed' : isActive ? null : 'spillover';
       if (!done) carryOver.push(si2.issue);
 
       // Some items get blocked during the sprint
       if (chance(0.12)) {
-        const bStart = new Date(Math.max(si2.issue.startedAt.getTime(), days[1].getTime()) + between(0, 3) * 86400000);
+        const bStart = new Date(Math.min(Math.max(si2.issue.startedAt.getTime(), days[1].getTime()) + between(0, 3) * 86400000, endOfSprint.getTime() - 7200000));
         const bLen = between(0.3, 3.5);
         blocked.push({
           issue: si2.issue.id,
           reason: pick(['Waiting on vendor API access', 'Environment unavailable', 'Awaiting design sign-off', 'Dependency on core team release']),
           external: chance(0.6),
           start: bStart,
-          end: si === sprintNames.length - 1 && chance(0.4) ? null : new Date(bStart.getTime() + bLen * 86400000),
+          end: si === names.length - 1 && chance(0.4) ? null : new Date(Math.min(bStart.getTime() + bLen * 86400000, endOfSprint.getTime())),
         });
       }
     }
@@ -209,7 +219,7 @@ for (const team of teams) {
     const defectCount = intBetween(10, 18);
     const sprintStories = sprintIssues.filter((x) => x.sprint === sprint.id).map((x) => x.issue);
     for (let d = 0; d < defectCount; d++) {
-      const created = atWorkHour(pick(days));
+      const created = new Date(Math.min(atWorkHour(pick(days)).getTime(), endOfSprint.getTime() - 3600000));
       const r = rand();
       const foundIn = r < 0.03 ? 'prod' : r < 0.07 ? 'uat' : r < 0.55 ? 'qa' : 'dev';
       const closed = chance(0.8) ? new Date(Math.min(created.getTime() + between(0.2, 4) * 86400000, endOfSprint.getTime())) : null;
@@ -239,7 +249,7 @@ insert('teams', ['id', 'project_id', 'name', 'wip_limit'], teams.map((t) => [q(t
 insert('team_members', ['team_id', 'user_id'], teams.flatMap((t) => t.members.map((m) => [q(t.id), q(m.id)])));
 insert('releases', ['id', 'project_id', 'name', 'target_date'], releases.map((r) => [q(r.id), q(r.project), q(r.name), q(r.target)]));
 insert('sprints', ['id', 'team_id', 'release_id', 'name', 'goal', 'start_date', 'end_date', 'status'],
-  sprints.map((s) => [q(s.id), q(s.team), q(s.release), q(s.name), q(s.goal), day(s.start), day(s.end), q('completed')]));
+  sprints.map((s) => [q(s.id), q(s.team), q(s.release), q(s.name), q(s.goal), day(s.start), day(s.end), q(s.status)]));
 insert('issues', ['id', 'project_id', 'issue_key', 'title', 'type', 'story_points', 'assignee_id', 'status', 'started_at', 'completed_at',
   'dor_met', 'dod_met', 'has_acceptance_criteria', 'code_reviewed', 'tests_complete', 'automated', 'created_at'],
   issues.map((i) => [q(i.id), q(i.project), q(i.key), q(i.title), q(i.type), i.points, q(i.assignee), q(i.status), ts(i.startedAt), ts(i.completedAt),
