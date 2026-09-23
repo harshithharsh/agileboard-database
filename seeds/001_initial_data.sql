@@ -21,7 +21,6 @@ CROSS JOIN (VALUES
   ('completion',     '>=', 80),
   ('spillover',      '<=', 10),
   ('unplanned',      '<=', 10),
-  ('defect_escape',  '<=', 5),
   ('blocked_items',  '<=', 3),
   ('dod_compliance', '>=', 100)
 ) AS t(metric, operator, value);
