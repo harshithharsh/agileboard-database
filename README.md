@@ -1,26 +1,25 @@
 # AgileBoard – Database
 
-PostgreSQL schema and seed data for the AgileBoard sprint performance dashboard.
+PostgreSQL schema and starting data for the AgileBoard sprint performance dashboard.
+Sprints, issues, people, defects and blockers are loaded from Jira by the backend (`npm run sync` in `agileboard-backend`).
 
 ## Structure
 - `schema/001_init.sql` – tables, applied in filename order
-- `seeds/001_initial_data.sql` – generated starting data (do not edit by hand)
-- `scripts/generate-seed.js` – regenerates the seed file (deterministic)
+- `seeds/001_initial_data.sql` – projects, teams with their Jira board ids, metric targets
 - `scripts/setup.sh` – drops/creates the database and applies schema + seeds
 
 ## Data model
 | Table | Purpose |
 |---|---|
-| `projects`, `teams`, `team_members`, `users` | Who is doing the work: project **Fibi** (teams Nexo, Vertex) and project **AI** (team Nexus) |
-| `releases`, `sprints` | Releases per project (Fibi R2.3/R2.4, AI R1.1). Nexo and Vertex have completed sprints S37–S42; Nexus has one active sprint, S1 (9–23 Sep 2026) |
+| `projects`, `teams`, `team_members`, `users` | Project **Fibi** (teams Nexo → Jira board 524, Vertex → board 12) and project **AI** (team Nexus → board 826). Users come from Jira assignees |
+| `releases`, `sprints` | Releases (Jira fix versions) and sprints, matched to Jira by `jira_sprint_id` |
 | `issues` | Stories, tasks, bugs, spikes, with start/complete times and compliance flags (DoR, DoD, acceptance criteria, code review, tests, automation) |
 | `sprint_issues` | An issue's participation in a sprint: `committed` vs `added` (unplanned), and `completed` / `spillover` outcome |
 | `issue_status_history` | Every status change, used for cycle time and WIP at sprint end |
 | `blocked_periods` | When an issue was blocked, why, and whether it was an external dependency |
 | `defects` | Defects raised per sprint and where they were found (`dev`, `qa`, `uat`, `prod`) |
 | `metric_targets` | Targets shown on the dashboard (e.g. predictability ≥ 80%) |
-
-Team names are real; the people in the seed data are demo users (`@example.com`).
+| `sync_runs` | History of Jira syncs (the dashboard shows the last successful one) |
 
 ## Setup
 ```bash
@@ -31,7 +30,4 @@ cp .env.example .env    # with Homebrew, DB_USER is your macOS username and DB_P
 
 Or with Docker: `docker compose up -d`
 
-To change the starting data, edit `scripts/generate-seed.js`, then:
-```bash
-node scripts/generate-seed.js && ./scripts/setup.sh
-```
+To add a team, insert it into `teams` with its Jira board id and run the sync.

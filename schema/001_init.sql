@@ -1,14 +1,17 @@
 -- AgileBoard schema (PostgreSQL 14+)
--- Sprint performance analytics: every dashboard metric is derived from
+-- Sprint performance analytics. Data is synced from Jira by the backend
+-- (agileboard-backend: npm run sync). Every dashboard metric is derived from
 -- sprint_issues (commitment + outcome, added_at), issues (started/completed),
 -- issue_status_history, blocked_periods and defects.
+-- jira_* columns hold the Jira ids used to match records on each sync.
 
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 CREATE TABLE users (
   id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name       VARCHAR(120) NOT NULL,
-  email      VARCHAR(255) NOT NULL UNIQUE,
+  email      VARCHAR(255) UNIQUE,                 -- Jira often hides emails
+  jira_account_id VARCHAR(128) UNIQUE,
   role       VARCHAR(20)  NOT NULL DEFAULT 'member'
              CHECK (role IN ('admin', 'scrum_master', 'member', 'viewer')),
   created_at TIMESTAMPTZ  NOT NULL DEFAULT now()
@@ -27,6 +30,7 @@ CREATE TABLE teams (
   project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
   name       VARCHAR(120) NOT NULL,
   wip_limit  INT NOT NULL DEFAULT 5,
+  jira_board_id INT UNIQUE,                        -- the team's Jira board
   UNIQUE (project_id, name)
 );
 
@@ -48,19 +52,21 @@ CREATE TABLE sprints (
   id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   team_id    UUID NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
   release_id UUID REFERENCES releases(id) ON DELETE SET NULL,
-  name       VARCHAR(60) NOT NULL,              -- e.g. "S42"
+  name       VARCHAR(120) NOT NULL,             -- e.g. "Nexus Sprint 2"
   goal       TEXT,
   start_date DATE NOT NULL,
   end_date   DATE NOT NULL,
+  started_at   TIMESTAMPTZ,                     -- exact Jira start time
+  completed_at TIMESTAMPTZ,                     -- when the sprint was closed in Jira
   status     VARCHAR(20) NOT NULL DEFAULT 'planned'
              CHECK (status IN ('planned', 'active', 'completed')),
-  UNIQUE (team_id, name)
+  jira_sprint_id INT UNIQUE
 );
 
 CREATE TABLE issues (
   id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   project_id   UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-  issue_key    VARCHAR(20) NOT NULL UNIQUE,     -- e.g. "FIBI-101"
+  issue_key    VARCHAR(30) NOT NULL UNIQUE,     -- e.g. "FIBI-101"
   title        VARCHAR(255) NOT NULL,
   type         VARCHAR(20) NOT NULL DEFAULT 'story'
                CHECK (type IN ('story', 'task', 'bug', 'spike')),
@@ -68,16 +74,18 @@ CREATE TABLE issues (
   assignee_id  UUID REFERENCES users(id) ON DELETE SET NULL,
   status       VARCHAR(20) NOT NULL DEFAULT 'todo'
                CHECK (status IN ('todo', 'in_progress', 'in_review', 'in_test', 'done')),
+  jira_status  VARCHAR(60),                     -- status name as shown in Jira
   started_at   TIMESTAMPTZ,                     -- first move to in_progress
   completed_at TIMESTAMPTZ,                     -- move to done
-  -- process compliance
-  dor_met                 BOOLEAN NOT NULL DEFAULT false,  -- Definition of Ready
-  dod_met                 BOOLEAN NOT NULL DEFAULT false,  -- Definition of Done
-  has_acceptance_criteria BOOLEAN NOT NULL DEFAULT false,
-  code_reviewed           BOOLEAN NOT NULL DEFAULT false,
-  tests_complete          BOOLEAN NOT NULL DEFAULT false,
-  automated               BOOLEAN NOT NULL DEFAULT false,
-  created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+  -- process compliance; NULL = not tracked
+  dor_met                 BOOLEAN,         -- Definition of Ready
+  dod_met                 BOOLEAN,         -- Definition of Done
+  has_acceptance_criteria BOOLEAN,
+  code_reviewed           BOOLEAN,
+  tests_complete          BOOLEAN,
+  automated               BOOLEAN,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+  jira_issue_id VARCHAR(30) UNIQUE
 );
 
 -- An issue's participation in a sprint. The same issue can appear in two
@@ -120,6 +128,15 @@ CREATE TABLE defects (
   found_in    VARCHAR(10) NOT NULL CHECK (found_in IN ('dev', 'qa', 'uat', 'prod')),
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
   closed_at   TIMESTAMPTZ
+);
+
+-- One row per Jira sync run; the dashboard shows the last successful one.
+CREATE TABLE sync_runs (
+  id          BIGSERIAL PRIMARY KEY,
+  started_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  finished_at TIMESTAMPTZ,
+  status      VARCHAR(20) NOT NULL DEFAULT 'running' CHECK (status IN ('running', 'success', 'failed')),
+  message     TEXT
 );
 
 -- Targets shown on the dashboard ("Target ≥ 80%").

@@ -1,10 +1,9 @@
 {
   "name": "agileboard-database",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "generate-seed": "node scripts/generate-seed.js",
     "setup": "./scripts/setup.sh"
   }
 }
