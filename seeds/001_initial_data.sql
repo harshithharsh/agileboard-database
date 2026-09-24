@@ -18,7 +18,6 @@ SELECT p.id, t.metric, t.operator, t.value
 FROM projects p
 CROSS JOIN (VALUES
   ('predictability', '>=', 80),
-  ('completion',     '>=', 80),
   ('spillover',      '<=', 10),
   ('unplanned',      '<=', 10),
   ('blocked_items',  '<=', 3),
