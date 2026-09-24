@@ -4,7 +4,10 @@ PostgreSQL schema and starting data for the AgileBoard sprint performance dashbo
 Sprints, issues, people, defects and blockers are loaded from Jira by the backend (`npm run sync` in `agileboard-backend`).
 
 ## Structure
-- `schema/001_init.sql` – tables, applied in filename order
+- `schema/001_init.sql` – tables
+- `schema/002_issue_priority.sql` – issue priority (for the P1 - Blocker card)
+
+Schema files are applied in filename order. To add a new one to an existing database without losing synced data, run just that file, e.g. `psql -d agileboard -f schema/002_issue_priority.sql`, applied in filename order
 - `seeds/001_initial_data.sql` – projects, teams with their Jira board ids, metric targets
 - `scripts/setup.sh` – drops/creates the database and applies schema + seeds
 
