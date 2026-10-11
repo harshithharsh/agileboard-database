@@ -1,4 +1,4 @@
--- Admin: roles, user role/project assignment, project status, API keys.
+-- Admin: roles, user role/project assignment, project status.
 
 CREATE TABLE IF NOT EXISTS roles (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -30,22 +30,6 @@ CREATE TABLE IF NOT EXISTS user_projects (
 
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS status VARCHAR(10) NOT NULL DEFAULT 'active'
   CHECK (status IN ('active', 'inactive'));
-
--- Integration credentials. The secret is AES-256-GCM encrypted by the backend (APP_SECRET);
--- only the last 4 characters are kept in clear text for display.
-CREATE TABLE IF NOT EXISTS api_keys (
-  id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name             VARCHAR(80) NOT NULL,
-  integration      VARCHAR(20) NOT NULL CHECK (integration IN ('jira', 'azure_devops', 'redmine', 'other')),
-  base_url         TEXT,
-  account_email    VARCHAR(255),
-  secret_encrypted TEXT NOT NULL,
-  secret_last4     VARCHAR(4) NOT NULL,
-  status           VARCHAR(10) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'inactive')),
-  last_used_at     TIMESTAMPTZ,
-  created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at       TIMESTAMPTZ NOT NULL DEFAULT now()
-);
 
 -- Existing people synced from Jira start as Viewers on the projects they work on
 UPDATE users SET role_id = (SELECT id FROM roles WHERE name = 'Viewer') WHERE role_id IS NULL;
