@@ -10,6 +10,7 @@ Sprints, issues, people, defects and blockers are loaded from Jira by the backen
 - `schema/004_subtasks.sql` – allows the `subtask` issue type (counted in Issues by Type, excluded from metrics)
 - `schema/005_auth.sql` – sign-in: username / password hash on users, sessions
 - `schema/006_user_preferences.sql` – per-user dashboard layout
+- `schema/007_blocked_stage.sql` – workflow status and assignee when an issue got blocked
 
 Schema files are applied in filename order. To add a new one to an existing database without losing synced data, run just that file, e.g. `psql -d agileboard -f schema/002_issue_priority.sql`, applied in filename order
 - `seeds/001_initial_data.sql` – projects, teams with their Jira board ids, metric targets
