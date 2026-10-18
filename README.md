@@ -12,6 +12,7 @@ Sprints, issues, people, defects and blockers are loaded from Jira by the backen
 - `schema/006_user_preferences.sql` – per-user dashboard layout
 - `schema/007_blocked_stage.sql` – workflow status and assignee when an issue got blocked
 - `schema/008_sprint_goal_and_added_by.sql` – sprint goal outcome, goal-tagged issues, who added an issue mid-sprint
+- `schema/009_app_settings.sql` – workspace settings (date and time format)
 
 Schema files are applied in filename order. To add a new one to an existing database without losing synced data, run just that file, e.g. `psql -d agileboard -f schema/002_issue_priority.sql`, applied in filename order
 - `seeds/001_initial_data.sql` – projects, teams with their Jira board ids, metric targets
