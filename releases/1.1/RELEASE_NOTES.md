@@ -1,6 +1,6 @@
-# AgileMetrix 1.2 — release notes
+# AgileMetrix 1.1 — release notes
 
-**Release date:** 20 Oct 2026 · **Previous release:** 1.0 (version 1.1 was not released) · **Branch:** `release/1.2` in all three repositories · **Tag:** `v1.2`
+**Release date:** 20 Oct 2026 · **Previous release:** 1.0 · **Branch:** `release/1.1` in all three repositories · **Tag:** `v1.1`
 
 ## What's new
 
@@ -19,13 +19,13 @@
 
 ## Upgrade from 1.0
 
-1. Back up the database: `pg_dump -Fc <database> > before-1.2.dump`
-2. Database: run `releases/1.2/upgrade.sql` from the `agileboard-database` repository (adds schema 008 and 009; existing data is kept; safe to run twice).
-3. Backend: deploy `release/1.2`, run `npm ci --omit=dev`, add the new settings from the [configuration sheet](CONFIGURATION.md) (email `SMTP_*`, `APP_URL`, `COOKIE_SECURE`), restart.
-4. Frontend: build `release/1.2` with `VITE_API_URL` set, upload `dist/`.
+1. Back up the database: `pg_dump -Fc <database> > before-1.1.dump`
+2. Database: run `releases/1.1/upgrade.sql` from the `agileboard-database` repository (adds schema 008 and 009; existing data is kept; safe to run twice).
+3. Backend: deploy `release/1.1`, run `npm ci --omit=dev`, add the new settings from the [configuration sheet](CONFIGURATION.md) (email `SMTP_*`, `APP_URL`, `COOKIE_SECURE`), restart.
+4. Frontend: build `release/1.1` with `VITE_API_URL` set, upload `dist/`.
 5. Sign in as an administrator, click **Refresh** once, then set up **Workspace Settings → General → Scheduled Jira sync**.
 
-**New installation:** run `releases/1.2/all.sql` on an empty database instead of step 2, then follow the deployment guide.
+**New installation:** run `releases/1.1/all.sql` on an empty database instead of step 2, then follow the deployment guide.
 
 ## Notes
 

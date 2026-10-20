@@ -48,4 +48,4 @@ Each release has a folder in `releases/<version>/`:
 - `upgrade.sql` — upgrade an existing database from the previous release (only the new schema files; safe to re-run)
 - `RELEASE_NOTES.md` and `CONFIGURATION.md`
 
-Build them with `./scripts/build-release-sql.sh <version> <previous> <new schema numbers…>`, e.g. `./scripts/build-release-sql.sh 1.2 1.0 008 009`.
+Build them with `./scripts/build-release-sql.sh <version> <previous> <new schema numbers…>`, e.g. `./scripts/build-release-sql.sh 1.1 1.0 008 009`.

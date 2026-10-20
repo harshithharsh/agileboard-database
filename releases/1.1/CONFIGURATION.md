@@ -1,4 +1,4 @@
-# AgileMetrix 1.2 — configuration sheet
+# AgileMetrix 1.1 — configuration sheet
 
 Fill in the **Value** column for your environment. Secrets (marked 🔒) go only in the server's `.env` or secrets manager — never in Git, email or chat.
 

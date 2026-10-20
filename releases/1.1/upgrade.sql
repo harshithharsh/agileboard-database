@@ -1,6 +1,6 @@
--- AgileMetrix 1.2: upgrade an EXISTING 1.0 database to 1.2.
+-- AgileMetrix 1.1: upgrade an EXISTING 1.0 database to 1.1.
 -- Adds only what is new in this release; existing data is kept. Safe to run more than once.
--- Back up first: pg_dump -Fc <database> > before-1.2.dump
+-- Back up first: pg_dump -Fc <database> > before-1.1.dump
 -- Run: psql -v ON_ERROR_STOP=1 -h <host> -U <user> -d <database> -f upgrade.sql
 
 BEGIN;

@@ -1,4 +1,4 @@
--- AgileMetrix 1.2: full database for a NEW installation (empty database).
+-- AgileMetrix 1.1: full database for a NEW installation (empty database).
 -- Creates every table and loads the starting data (projects, teams, metric targets).
 -- Run: psql -v ON_ERROR_STOP=1 -h <host> -U <user> -d <database> -f all.sql
 -- Do NOT run this on a database that already has AgileMetrix data: use upgrade.sql instead.
