@@ -41,3 +41,11 @@ cp .env.example .env    # with Homebrew, DB_USER is your macOS username and DB_P
 Or with Docker: `docker compose up -d`
 
 To add a team, insert it into `teams` with its Jira board id and run the sync.
+
+## Releases
+Each release has a folder in `releases/<version>/`:
+- `all.sql` — new installation on an empty database (all schema files and the starting data, one transaction)
+- `upgrade.sql` — upgrade an existing database from the previous release (only the new schema files; safe to re-run)
+- `RELEASE_NOTES.md` and `CONFIGURATION.md`
+
+Build them with `./scripts/build-release-sql.sh <version> <previous> <new schema numbers…>`, e.g. `./scripts/build-release-sql.sh 1.2 1.0 008 009`.
