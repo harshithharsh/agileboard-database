@@ -17,6 +17,7 @@ Sprints, issues, people, defects and blockers are loaded from Jira by the backen
 - `schema/011_scrum_master_role.sql` – adds the Scrum Master role (view, create, edit)
 - `schema/012_redmine.sql` – Redmine: project links, people, imported time entries and import history
 - `schema/013_resources.sql` – Resource Management: employment FTE, weekly hours and dated project allocations per person
+- `schema/014_holidays.sql` – public holidays (Settings → General), left out of capacity
 
 Schema files are applied in filename order. To add a new one to an existing database without losing synced data, run just that file, e.g. `psql -d agileboard -f schema/002_issue_priority.sql`, applied in filename order
 - `seeds/001_initial_data.sql` – projects, teams with their Jira board ids, metric targets
