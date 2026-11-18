@@ -20,6 +20,7 @@ Sprints, issues, people, defects and blockers are loaded from Jira by the backen
 - `schema/014_holidays.sql` – public holidays (Settings → General), left out of capacity
 - `schema/015_project_manager.sql` – Project Manager role, and a project manager per project
 - `schema/016_allocation_billable.sql` – billable / non-billable project allocations
+- `schema/017_resource_leave.sql` – leave marked on people in Resource allocation
 - `seeds/holidays_kerala_2026.sql` – Kerala public holidays for 2026 (optional; run once with psql, safe to repeat)
 
 Schema files are applied in filename order. To add a new one to an existing database without losing synced data, run just that file, e.g. `psql -d agileboard -f schema/002_issue_priority.sql`, applied in filename order
